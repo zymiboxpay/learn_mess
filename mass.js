@@ -350,7 +350,7 @@
         class2type["[object " + name + "]"] = name;
     });
     //============================加载系统===========================
-    var modules = $.modules = {
+    var modules = $.modules = { //@zhu modules 的 KEY 主要是 require 的任务ID ，对 require 依赖列表中出现的 ready 和 mass 作特殊处理
         ready: {
             exports: $
         },
@@ -407,8 +407,8 @@
 
     function checkDeps() {
         //检测此JS模块的依赖是否都已安装完毕,是则安装自身
-        loop: for (var i = loadings.length, id; id = loadings[--i]; ) {
-            var obj = modules[id],
+        loop: for (var i = loadings.length, id; id = loadings[--i]; ) {//@zhu loadings 里装的都是 require 任务 ID ，以callback开头
+            var obj = modules[id],//@zhu modules 的 KEY 主要是 require 任务ID ，对应的 value 是个对象，有以下属性：id: id,factory: factory,deps: deps,args: args,state: undefined/1/2
                     deps = obj.deps;
             for (var key in deps) {
                 if (hasOwn.call(deps, key) && modules[key].state !== 2) {
@@ -476,7 +476,7 @@
         var src = ret.replace(/[?#].*/, ""),
                 ext;
         if (/\.(css|js)$/.test(src)) { // 处理"http://113.93.55.202/mass.draggable"的情况
-            ext = RegExp.$1;
+            ext = RegExp.$1; //@zhu 还可以这样用的 引用捕获组
         }
         if (!ext) { //如果没有后缀名,加上后缀名
             src += ".js";
@@ -485,7 +485,7 @@
         //3. 开始加载JS或CSS
         if (ext === "js") {
             if (!modules[src]) { //如果之前没有加载过
-                modules[src] = {
+                modules[src] = { //@zhu 在这里第一次设置 modules.url 的值
                     id: src,
                     parent: parent,
                     exports: {}
@@ -516,12 +516,12 @@
         node[W3C ? "onload" : "onreadystatechange"] = function() {
             if (W3C || /loaded|complete/i.test(node.readyState)) {
                 //mass Framework会在_checkFail把它上面的回调清掉，尽可能释放回存，尽管DOM0事件写法在IE6下GC无望
-                var factory = factorys.pop();
+                var factory = factorys.pop(); //@zhu define方法里用户加载完依赖之后的回调
                 factory && factory.delay(node.src);
                 if (callback) {
                     callback();
                 }
-                if (checkFail(node, false, !W3C)) {
+                if (checkFail(node, false, !W3C)) {//@zhu 返回true 表示成功加载 有歧义
                     $.log("已成功加载 " + node.src, 7);
                 }
             }
@@ -561,8 +561,8 @@
                 dn = 0,
                 // 已安装完的模块数
                 cn = 0,
-                id = parent || "callback" + setTimeout("1"); //@zhu setTimeout 返回一个 timeID
-        parent = parent || basepath;
+                id = parent || "callback" + setTimeout("1"); //@zhu setTimeout 返回一个 timeID ; id 标识每一个require任务
+        parent = parent || basepath; //@zhu basepath 为加载器的路径
         String(list).replace($.rword, function(el) {
             var url = loadJSCSS(el, parent)
             if (url) {
@@ -579,9 +579,9 @@
         modules[id] = {//创建一个对象,记录模块的加载情况与其他信息
             id: id,
             factory: factory,
-            deps: deps,
-            args: args,
-            state: 1
+            deps: deps, //@zhu 为依赖js模块的路径
+            args: args, //@zhu 保存依赖模块的返回值
+            state: 1 //@zhu 为1时，表明开始加载，为2时，表明其依赖的模块都加载好，执行回调函数，如果加载失败，状态永远为1，但会抛异常
         };
         if (dn === cn) { //如果需要安装的等于已安装好的
             fireFactory(id, args, factory); //安装到框架中
